@@ -72,7 +72,21 @@ trap "cleanup_secrets" EXIT
 AGENT_PRIVATE_KEY_PATH="${SECRETS_MOUNT_POINT}/agent.key"
 AGENT_PUBLIC_KEY_PATH="${SECRETS_MOUNT_POINT}/agent.pub"
 if [[ ! -f "${AGENT_PRIVATE_KEY_PATH}" ]]; then
-    die "Unable to open agent private key path '${AGENT_PRIVATE_KEY_PATH}'!  Make sure your agent has this file deployed within it!"
+    echo "Unable to open agent private key path '${AGENT_PRIVATE_KEY_PATH}'!  Make sure your agent has this file deployed within it!"
+    echo "NOTE: This is a known bug where this agent is old, caused by the agent not restarting after a previous job."
+    echo "see https://github.com/JuliaCI/sandboxed-buildkite-agent/issues/42"
+    echo "Showing debug information..."
+    powershell.exe -Command "& {
+        \$providers = @('nssm', 'User32');
+        foreach (\$provider in \$providers) {
+            Write-Host \"\`n   ProviderName: \$provider\`n\";
+            Get-WinEvent -LogName Application -FilterXPath \"*[System[Provider[@Name='\$provider']]]\" -MaxEvents 50 |
+            Sort-Object TimeCreated |
+            Select-Object TimeCreated, Id, LevelDisplayName, Message |
+            Format-Table -AutoSize
+        }
+        }"
+    exit 1
 else
     if ! openssl rsa -inform PEM -in "${AGENT_PRIVATE_KEY_PATH}" -noout 2>/dev/null; then
         die "Secret private key path '${AGENT_PRIVATE_KEY_PATH}' is not a valid private RSA key!"
