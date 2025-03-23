@@ -79,7 +79,7 @@ if [[ ! -f "${AGENT_PRIVATE_KEY_PATH}" ]]; then
     powershell.exe -Command "& {
         \$providers = @('nssm', 'User32');
         foreach (\$provider in \$providers) {
-            Write-Host \"`n   ProviderName: \$provider`n\";
+            Write-Host \"\`n   ProviderName: \$provider\`n\";
             Get-WinEvent -LogName Application -FilterXPath \"*[System[Provider[@Name='\$provider']]]\" -MaxEvents 50 |
             Sort-Object TimeCreated |
             Select-Object TimeCreated, Id, LevelDisplayName, Message |
