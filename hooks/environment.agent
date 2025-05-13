@@ -77,10 +77,13 @@ if [[ ! -f "${AGENT_PRIVATE_KEY_PATH}" ]]; then
     echo "see https://github.com/JuliaCI/sandboxed-buildkite-agent/issues/42"
     echo "Showing debug information..."
     powershell.exe -Command "& {
-        \$providers = @('nssm', 'User32');
+        \$providers = @(
+            @{LogName='Application'; ProviderName='nssm'},
+            @{LogName='System'; ProviderName='User32'}
+        );
         foreach (\$provider in \$providers) {
-            Write-Host \"\`n   ProviderName: \$provider\`n\";
-            Get-WinEvent -LogName Application -FilterXPath \"*[System[Provider[@Name='\$provider']]]\" -MaxEvents 50 |
+            Write-Host \"\`n   ProviderName: \$(\$provider.ProviderName)\`n\";
+            Get-WinEvent -LogName \$(\$provider.LogName) -FilterXPath \"*[System[Provider[@Name='\$(\$provider.ProviderName)']]]\" -MaxEvents 50 |
             Sort-Object TimeCreated |
             Select-Object TimeCreated, Id, LevelDisplayName, Message |
             Format-Table -AutoSize
