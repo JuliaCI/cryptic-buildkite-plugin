@@ -86,7 +86,7 @@ if [[ ! -f "${AGENT_PRIVATE_KEY_PATH}" ]]; then
             Get-WinEvent -LogName \$(\$provider.LogName) -FilterXPath \"*[System[Provider[@Name='\$(\$provider.ProviderName)']]]\" -MaxEvents 50 |
             Sort-Object TimeCreated |
             Select-Object TimeCreated, Id, LevelDisplayName, Message |
-            Format-Table -AutoSize
+            Format-Table -Wrap
         }
         }"
     exit 1
