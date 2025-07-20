@@ -41,7 +41,7 @@ cat <<-EOD
     locking down CI configuration and next steps.
 
     plugins:
-        - staticfloat/cryptic:
+        - JuliaCI/cryptic#ib/fixes:
           variables:
             - ${SECRET_NAME}="${ENCRYPTED_SECRET_VALUE}"
 EOD

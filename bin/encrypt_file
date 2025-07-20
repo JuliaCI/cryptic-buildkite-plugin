@@ -81,7 +81,7 @@ cat <<-EOD
     locking down CI configuration and next steps.
 
     plugins:
-        - staticfloat/cryptic:
+        - JuliaCI/cryptic#ib/fixes:
           files:
             - ${FILE_PATH}
 EOD
