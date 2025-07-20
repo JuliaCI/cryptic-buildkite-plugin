@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Use more compatible shell options for Windows Git Bash
-set -euo pipefail
+set -eu -o pipefail
 # Note: pipefail can cause issues in Git Bash on Windows, but we'll keep it for error detection
 
 # Detect Windows early for compatibility adjustments
