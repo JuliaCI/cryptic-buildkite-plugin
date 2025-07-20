@@ -165,7 +165,7 @@ function get_initial_job_id() {
         # Use more memory-efficient curl options
         CURL_OUTPUT="$(curl -sfL --max-time 30 --connect-timeout 10 -H "${TOKEN_HEADER}" "${URL}" 2>/dev/null || true)"
         if [[ -n "${CURL_OUTPUT}" ]]; then
-            CURL_UUID="$(echo "${CURL_OUTPUT}" | jq -r '.jobs[0].id // empty' 2>/dev/null || true)"
+            CURL_UUID="$(jq -r '.jobs[0].id // empty' <<< "${CURL_OUTPUT}" 2>/dev/null || true)"
             if is_uuid "${CURL_UUID}"; then
                 echo -n "${CURL_UUID}"
                 return
@@ -230,7 +230,7 @@ function set_cryptic_privileged() {
             unset secret_value
 
             # Decrypt the AES key (stream processing to reduce memory)
-            if ! echo "${key_part}" | base64dec | openssl pkeyutl -decrypt -inkey "${AGENT_PRIVATE_KEY_PATH}" > "${TEMP_KEYFILE}"; then
+            if ! base64dec <<< "${key_part}" | openssl pkeyutl -decrypt -inkey "${AGENT_PRIVATE_KEY_PATH}" > "${TEMP_KEYFILE}"; then
                 secure_delete "${TEMP_KEYFILE}"
                 eval "${OLD_TRAP}"
                 die "Failed to decrypt AES key for secret '${EXPORTED_NAME}'"
@@ -251,7 +251,7 @@ function set_cryptic_privileged() {
 
             # Decrypt the actual secret data (stream processing)
             local decrypted_data
-            if ! decrypted_data="$(echo "${data_part}" | base64dec | openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass "file:${TEMP_KEYFILE}")"; then
+            if ! decrypted_data="$(base64dec <<< "${data_part}" | openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass "file:${TEMP_KEYFILE}")"; then
                 secure_delete "${TEMP_KEYFILE}"
                 eval "${OLD_TRAP}"
                 unset data_part
@@ -291,7 +291,7 @@ elif [[ -v "BUILDKITE_PLUGIN_CRYPTIC_BASE64_SIGNED_JOB_ID_SECRET" ]]; then
     trap 'rm -f "${SIGNATURE_FILE}"' EXIT
     
     # Stream decode directly to file to avoid keeping data in memory
-    if ! echo "${BUILDKITE_PLUGIN_CRYPTIC_BASE64_SIGNED_JOB_ID_SECRET}" | openssl base64 -d -A > "${SIGNATURE_FILE}"; then
+    if ! openssl base64 -d -A <<< "${BUILDKITE_PLUGIN_CRYPTIC_BASE64_SIGNED_JOB_ID_SECRET}" > "${SIGNATURE_FILE}"; then
         rm -f "${SIGNATURE_FILE}"
         eval "${OLD_TRAP}"
         die "Failed to decode signature data"
@@ -299,7 +299,7 @@ elif [[ -v "BUILDKITE_PLUGIN_CRYPTIC_BASE64_SIGNED_JOB_ID_SECRET" ]]; then
 
     # Verify that the signature is valid using streaming verification
     verification_result=false
-    if echo "${BUILDKITE_INITIAL_JOB_ID}" | openssl dgst -sha256 -verify "${AGENT_PUBLIC_KEY_PATH}" -signature "${SIGNATURE_FILE}" >/dev/null 2>&1; then
+    if openssl dgst -sha256 -verify "${AGENT_PUBLIC_KEY_PATH}" -signature "${SIGNATURE_FILE}" <<< "${BUILDKITE_INITIAL_JOB_ID}" >/dev/null 2>&1; then
         verification_result=true
     fi
 
