@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
-set -eou pipefail
+# Use more compatible shell options for Windows Git Bash
+set -euo pipefail
+# Note: pipefail can cause issues in Git Bash on Windows, but we'll keep it for error detection
+
+# Detect Windows early for compatibility adjustments
+IS_WINDOWS=false
+if [[ "$(uname -s 2>/dev/null || echo unknown)" == MINGW* ]] || [[ -n "${WINDIR:-}" ]]; then
+    IS_WINDOWS=true
+    echo "Windows environment detected"
+fi
 
 ## A foundational concept for the usage of this hook is that we can deny access to secrets
 ## (such as the agent private key or the build token file) by deleting or unmounting the
@@ -9,7 +18,12 @@ set -eou pipefail
 ## agent should exit, causing the docker container to restart and restore the deleted files.
 ## This gives us the capability to deny access to these files to later steps within the
 ## current buildkite job.
-SECRETS_MOUNT_POINT="${BUILDKITE_PLUGIN_CRYPTIC_SECRETS_MOUNT_POINT:-/secrets}"
+# Detect Windows and set appropriate default secrets path
+if [[ "$IS_WINDOWS" == "true" ]]; then
+    SECRETS_MOUNT_POINT="${BUILDKITE_PLUGIN_CRYPTIC_SECRETS_MOUNT_POINT:-/c/buildkite-agent/secrets}"
+else
+    SECRETS_MOUNT_POINT="${BUILDKITE_PLUGIN_CRYPTIC_SECRETS_MOUNT_POINT:-/secrets}"
+fi
 
 ## The secrets that must be contained within:
 ##    - `agent.{key,pub}`: An RSA private/public keypair (typically generated via the
@@ -37,6 +51,18 @@ function base64enc() {
     openssl base64 -e -A
 }
 
+# Windows-compatible mktemp function
+function safe_mktemp() {
+    if command -v mktemp >/dev/null 2>&1; then
+        mktemp
+    else
+        # Fallback for systems without mktemp (like some Windows environments)
+        local temp_dir="${TMPDIR:-${TMP:-${TEMP:-/tmp}}}"
+        local temp_file="${temp_dir}/tmp.$$.$RANDOM"
+        touch "$temp_file" && echo "$temp_file"
+    fi
+}
+
 if [[ -n "$(which shred 2>/dev/null)" ]]; then
     function secure_delete() {
         shred -u "$*"
@@ -55,9 +81,19 @@ fi
 function cleanup_secrets() {
     ## Cleanup: Deny access to secrets to future pipeline steps by either unmounting `/secrets`
     #  or just deleting the files inside, if that doesn't work.  If neither work, we abort the build.
-    if ! umount "${SECRETS_MOUNT_POINT}" 2>/dev/null; then
+    
+    # On Windows, umount is not available, so skip that attempt
+    if [[ "$IS_WINDOWS" == "true" ]]; then
+        echo "Windows detected, skipping umount attempt"
         if ! rm -rf "${SECRETS_MOUNT_POINT}"; then
-            die "Unable to unmount secrets at '${SECRETS_MOUNT_POINT}'!  Aborting build!"
+            die "Unable to delete secrets at '${SECRETS_MOUNT_POINT}'!  Aborting build!"
+        fi
+    else
+        # Unix/Linux: try umount first, then rm
+        if ! umount "${SECRETS_MOUNT_POINT}" 2>/dev/null; then
+            if ! rm -rf "${SECRETS_MOUNT_POINT}"; then
+                die "Unable to unmount secrets at '${SECRETS_MOUNT_POINT}'!  Aborting build!"
+            fi
         fi
     fi
 
@@ -153,9 +189,10 @@ function set_cryptic_privileged() {
         echo " --> Decrypting ad-hoc secret ${EXPORTED_NAME}"
 
         # No matter what happens, this file dies when we leave
-        local TEMP_KEYFILE=$(mktemp)
+        local TEMP_KEYFILE
+        TEMP_KEYFILE=$(safe_mktemp)
         OLD_TRAP="$(trap -p EXIT)"
-        trap "rm -f ${TEMP_KEYFILE}" EXIT
+        trap 'rm -f "${TEMP_KEYFILE}"' EXIT
 
         # Use `readarray` to split our combined key/value envvar
         readarray -d';' -t ADHOC_PAIR <<<"${!LONG_ADHOC_NAME}"
@@ -189,9 +226,10 @@ if [[ "${BUILDKITE_JOB_ID}" == "${BUILDKITE_INITIAL_JOB_ID}" ]]; then
     set_cryptic_privileged
 elif [[ -v "BUILDKITE_PLUGIN_CRYPTIC_BASE64_SIGNED_JOB_ID_SECRET" ]]; then
     # Decode the base64-encoded signature and dump it to a file
-    SIGNATURE_FILE="$(mktemp)"
+    SIGNATURE_FILE
+    SIGNATURE_FILE="$(safe_mktemp)"
     OLD_TRAP="$(trap -p EXIT)"
-    trap "rm -f ${SIGNATURE_FILE}" EXIT
+    trap 'rm -f "${SIGNATURE_FILE}"' EXIT
     openssl base64 -d -A <<<"${BUILDKITE_PLUGIN_CRYPTIC_BASE64_SIGNED_JOB_ID_SECRET}" > "${SIGNATURE_FILE}"
 
     # Verify that the signature is valid; if it is, then unlock the keys!
