@@ -134,6 +134,10 @@ function get_initial_job_id() {
         echo "ERROR: Initial job ID output invalid:\n${CURL_OUTPUT}" >&2
         echo "Retrying up to $((3 - $idx)) more times before failing out..." >&2
     done
+    # If we fail out, let's print the curl output to the log:
+    echo "Begin curl output:"
+    curl --fail-with-body -L -H "${TOKEN_HEADER}" "${URL}"
+    echo "End curl output"
     die "Initial job ID does not look like a UUID: '${CURL_UUID}'"
 }
 
