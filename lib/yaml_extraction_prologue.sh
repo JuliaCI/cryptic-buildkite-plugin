@@ -20,7 +20,7 @@ function extract_encrypted_variables() {
                 # Skip plugins that are not named `cryptic`
                 # For now, support both JuliaCI/cryptic* and staticfloat/cryptic*, to make the
                 # transition smoother.
-                if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* || "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
+                if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* && "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
                     continue
                 fi
                 # For each plugin, if its `cryptic`, extract the variables
@@ -69,7 +69,7 @@ function extract_encrypted_files() {
                 # Skip plugins that are not named `cryptic`
                 # For now, support both JuliaCI/cryptic* and staticfloat/cryptic*, to make the
                 # transition smoother.
-                if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* || "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
+                if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* && "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
                     continue
                 fi
                 # For each plugin, if its `cryptic`, extract the files
@@ -119,7 +119,7 @@ function extract_plugin_treehashes() {
             # Skip plugins that are not named `cryptic`
             # For now, support both JuliaCI/cryptic* and staticfloat/cryptic*, to make the
             # transition smoother.
-            if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* || "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
+            if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* && "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
                 continue
             fi
 
