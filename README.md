@@ -34,7 +34,7 @@ steps:
     env:
       BUILDKITE_PLUGIN_CRYPTIC_BASE64_SIGNED_JOB_ID_SECRET: ${BUILDKITE_PLUGIN_CRYPTIC_BASE64_SIGNED_JOB_ID_SECRET?}
     plugins:
-    - staticfloat/cryptic:
+    - JuliaCI/cryptic:
         files:
             # This file is actually only stored as `secret_message.txt.encrypted` in the repo,
             # and `cryptic` will create the `secret_message.txt` file from it, when it decrypts
@@ -75,7 +75,7 @@ steps:
   # In the WebUI, the `cryptic` launch job _must_ be the first job to run
   - label: ":rocket: launch pipelines"
     plugins:
-      - staticfloat/cryptic:
+      - JuliaCI/cryptic:
           # Our list of pipelines that should be launched (but don't require a signature)
           # These pipelines can be modified by any contributor and CI will still run.
           # Build secrets will not be available in these pipelines (or their children)
