@@ -18,7 +18,9 @@ function extract_encrypted_variables() {
             (shyaml -q keys-0 <<<"${PLUGINS}" || true) |
             while IFS='' read -r -d '' PLUGIN_NAME; do
                 # Skip plugins that are not named `cryptic`
-                if [[ "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
+                # For now, support both JuliaCI/cryptic* and staticfloat/cryptic*, to make the
+                # transition smoother.
+                if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* || "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
                     continue
                 fi
                 # For each plugin, if its `cryptic`, extract the variables
@@ -65,7 +67,9 @@ function extract_encrypted_files() {
             (shyaml -q keys-0 <<<"${PLUGINS}" || true) |
             while IFS='' read -r -d '' PLUGIN_NAME; do
                 # Skip plugins that are not named `cryptic`
-                if [[ "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
+                # For now, support both JuliaCI/cryptic* and staticfloat/cryptic*, to make the
+                # transition smoother.
+                if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* || "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
                     continue
                 fi
                 # For each plugin, if its `cryptic`, extract the files
@@ -76,7 +80,7 @@ function extract_encrypted_files() {
                 done
             done
         done
-    done    
+    done
 }
 
 # Calculate the treehashes of each signed pipeline defined within a launching `.yml` file,
@@ -113,7 +117,9 @@ function extract_plugin_treehashes() {
         (shyaml -q keys-0 <<<"${PLUGINS}" || true) |
         while IFS='' read -r -d '' PLUGIN_NAME; do
             # Skip plugins that are not named `cryptic`
-            if [[ "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
+            # For now, support both JuliaCI/cryptic* and staticfloat/cryptic*, to make the
+            # transition smoother.
+            if [[ "${PLUGIN_NAME}" != JuliaCI/cryptic* || "${PLUGIN_NAME}" != staticfloat/cryptic* ]]; then
                 continue
             fi
 
