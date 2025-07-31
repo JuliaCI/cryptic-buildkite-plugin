@@ -1,9 +1,9 @@
 name: Cryptic
 description: Deploy encrypted files to public repositories
-author: https://github.com/staticfloat
+author: https://github.com/JuliaCI
 configuration:
   properties:
-    # base64-encoded, encrypted variables that will be exported to the command block 
+    # base64-encoded, encrypted variables that will be exported to the command block
     # See `bin/encrypt_variable` for how to generate these.
     variables:
       type: array
