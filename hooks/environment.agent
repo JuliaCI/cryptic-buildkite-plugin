@@ -136,7 +136,7 @@ function get_initial_job_id() {
     done
     # If we fail out, let's print the curl output to the log:
     echo "Begin curl output:"
-    curl --fail-with-body -L -H "${TOKEN_HEADER}" "${URL}"
+    curl --fail-with-body -vL -H "${TOKEN_HEADER}" "${URL}"
     echo "End curl output"
     die "Initial job ID does not look like a UUID: '${CURL_UUID}'"
 }
