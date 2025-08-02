@@ -9,7 +9,10 @@ source "${CRYPTIC_REPO}/lib/common.sh"
 # If we're not authorized, quit out immediately
 if [[ "${BUILDKITE_PLUGIN_CRYPTIC_PRIVILEGED:-false}" != "true" ]]; then
     echo "Exiting immediately, as we're not privileged"
-    exit 0
+
+    # In this case, we don't want to fail silently.
+    # So we intentionally exit with non-zero exit code.
+    exit 1
 fi
 
 # Receive keys from agent environment hook
